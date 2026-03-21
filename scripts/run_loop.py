@@ -103,7 +103,6 @@ Respond with JSON only:
     result = subprocess.run(
         [
             "claude", "-p",
-            "--bare",
             "--model", "sonnet",
         ],
         input=prompt,

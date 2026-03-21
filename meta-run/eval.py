@@ -154,7 +154,6 @@ Answer YES or NO only."""
         result = subprocess.run(
             [
                 "claude", "-p",
-                "--bare",
                 "--model", "sonnet",
                 "--system-prompt", JUDGE_SYSTEM,
             ],
