@@ -15,14 +15,9 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-if ! python3 -c "import anthropic" 2>/dev/null; then
-    echo "Installing anthropic SDK..."
-    pip install anthropic
-fi
-
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "WARNING: ANTHROPIC_API_KEY not set. Export it before running evals."
-    echo "  export ANTHROPIC_API_KEY=sk-ant-..."
+if ! command -v claude &> /dev/null; then
+    echo "ERROR: claude CLI not found. Install Claude Code first."
+    exit 1
 fi
 
 # Resolve repo root (walk up from 1-projects/pm-autoresearch/meta-run/)

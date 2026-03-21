@@ -4,6 +4,9 @@ PM AutoResearch Meta-Run Eval Harness
 Scores SKILL.md quality with 18 strict binary evals.
 DO NOT MODIFY. The agent cannot touch this file.
 
+Uses `claude -p` (Claude Code CLI) instead of the Anthropic API.
+Runs on a Pro subscription with no API key required.
+
 Usage:
     python eval.py target.md
     python eval.py target.md --verbose
@@ -11,17 +14,9 @@ Usage:
 """
 
 import json
+import subprocess
 import sys
 import os
-import time
-
-try:
-    import anthropic
-except ImportError:
-    print("ERROR: pip install anthropic")
-    sys.exit(1)
-
-MODEL = "claude-sonnet-4-20250514"
 
 EVALS = [
     {
@@ -145,7 +140,8 @@ Rules:
 """
 
 
-def evaluate_single(client, document: str, eval_item: dict) -> dict:
+def evaluate_single(document: str, eval_item: dict) -> dict:
+    """Run a single binary eval via claude -p."""
     prompt = f"""<document>
 {document}
 </document>
@@ -155,14 +151,31 @@ Question: {eval_item['check']}
 Answer YES or NO only."""
 
     try:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=5,
-            system=JUDGE_SYSTEM,
-            messages=[{"role": "user", "content": prompt}]
+        result = subprocess.run(
+            [
+                "claude", "-p",
+                "--bare",
+                "--model", "sonnet",
+                "--system-prompt", JUDGE_SYSTEM,
+            ],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
-        answer = response.content[0].text.strip().upper()
+        if result.returncode != 0:
+            print(f"  ERROR evaluating {eval_item['id']}: {result.stderr[:200]}", file=sys.stderr)
+            return {
+                "id": eval_item["id"],
+                "category": eval_item["category"],
+                "passed": False,
+                "weight": eval_item.get("weight", 1.0),
+            }
+        answer = result.stdout.strip().upper()
         passed = answer.startswith("YES")
+    except subprocess.TimeoutExpired:
+        print(f"  TIMEOUT evaluating {eval_item['id']}", file=sys.stderr)
+        passed = False
     except Exception as e:
         print(f"  ERROR evaluating {eval_item['id']}: {e}", file=sys.stderr)
         passed = False
@@ -176,8 +189,7 @@ Answer YES or NO only."""
 
 
 def run_evals(document_path: str, verbose: bool = False) -> dict:
-    client = anthropic.Anthropic()
-
+    """Run all evals against a document."""
     with open(document_path, "r") as f:
         document = f.read()
 
@@ -185,9 +197,11 @@ def run_evals(document_path: str, verbose: bool = False) -> dict:
     for i, eval_item in enumerate(EVALS):
         if verbose:
             print(f"  [{i+1}/{len(EVALS)}] {eval_item['id']}...", file=sys.stderr)
-        result = evaluate_single(client, document, eval_item)
+        result = evaluate_single(document, eval_item)
         results.append(result)
-        time.sleep(0.3)
+        if verbose:
+            status = "PASS" if result["passed"] else "FAIL"
+            print(f"           -> {status}", file=sys.stderr)
 
     total_weight = sum(r["weight"] for r in results)
     passing_weight = sum(r["weight"] for r in results if r["passed"])

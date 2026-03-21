@@ -3,16 +3,19 @@
 PM AutoResearch Loop Runner
 
 Orchestrates the full autoresearch loop: edit target via Claude,
-run evals, keep or revert, log results, repeat.
+run scoring, keep or revert, log results, repeat.
+
+Uses `claude -p` (Claude Code CLI) instead of the Anthropic API.
+Runs on a Pro subscription with no API key required.
 
 Usage:
-    python run_loop.py --target target.md --eval eval.py --max-rounds 50
-    python run_loop.py --target target.md --eval eval.py --max-rounds 50 --tag mar21
+    python run_loop.py --target target.md --scoring scoring.py --max-rounds 50
+    python run_loop.py --target target.md --scoring scoring.py --max-rounds 50 --tag mar21
 
 Requirements:
-    - anthropic SDK installed
+    - claude CLI installed and authenticated
     - git initialized in the working directory
-    - eval.py and target.md present
+    - scoring.py and target.md present
 """
 
 import argparse
@@ -22,14 +25,6 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-
-try:
-    import anthropic
-except ImportError:
-    print("ERROR: pip install anthropic")
-    sys.exit(1)
-
-MODEL = "claude-sonnet-4-20250514"
 
 
 def run_command(cmd: str, timeout: int = 120) -> tuple:
@@ -43,9 +38,12 @@ def run_command(cmd: str, timeout: int = 120) -> tuple:
         return "", "TIMEOUT", 1
 
 
-def run_eval(eval_script: str, target: str) -> dict:
-    """Run the eval harness and parse results."""
-    stdout, stderr, rc = run_command(f"python {eval_script} {target} --output json")
+def run_scoring(scoring_script: str, target: str) -> dict:
+    """Run the scoring harness and parse results."""
+    stdout, stderr, rc = run_command(
+        f"python3 {scoring_script} {target} --output json",
+        timeout=600,
+    )
     if rc != 0:
         return {"error": stderr, "composite_score": 0}
     try:
@@ -54,28 +52,28 @@ def run_eval(eval_script: str, target: str) -> dict:
         return {"error": f"Parse error: {stdout[:200]}", "composite_score": 0}
 
 
-def get_failing_evals(eval_results: dict) -> list:
-    """Extract list of failing eval IDs and checks."""
-    if "results" not in eval_results:
+def get_failing_checks(results: dict) -> list:
+    """Extract list of failing check IDs and categories."""
+    if "results" not in results:
         return []
     return [
         {"id": r["id"], "category": r["category"]}
-        for r in eval_results["results"]
+        for r in results["results"]
         if not r["passed"]
     ]
 
 
-def propose_edit(client, target_content: str, failing_evals: list, history: list, program: str) -> dict:
-    """Ask Claude to propose a single focused edit to target.md."""
+def propose_edit(target_content: str, failing_checks: list, history: list, program: str) -> dict:
+    """Ask Claude to propose a single focused edit to target.md via claude -p."""
     history_summary = ""
     if history:
-        recent = history[-5:]  # last 5 experiments
+        recent = history[-5:]
         history_summary = "Recent experiments:\n"
         for h in recent:
             status = "KEPT" if h["kept"] else "REVERTED"
             history_summary += f"  Round {h['round']}: {h['change']} -> {status} (score: {h['score']})\n"
 
-    failing_summary = "\n".join(f"  FAILING: [{e['category']}] {e['id']}" for e in failing_evals)
+    failing_summary = "\n".join(f"  FAILING: [{e['category']}] {e['id']}" for e in failing_checks)
 
     prompt = f"""You are improving a PM document through iterative experimentation.
 
@@ -87,13 +85,13 @@ def propose_edit(client, target_content: str, failing_evals: list, history: list
 {target_content}
 </current_document>
 
-<failing_evals>
+<failing_checks>
 {failing_summary}
-</failing_evals>
+</failing_checks>
 
 {history_summary}
 
-Make ONE focused change to improve the document's eval score. Target the most impactful failing eval.
+Make ONE focused change to improve the document's score. Target the most impactful failing check.
 
 Respond with JSON only:
 {{
@@ -102,13 +100,22 @@ Respond with JSON only:
     "new_document": "The complete updated document content"
 }}"""
 
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=8192,
-        messages=[{"role": "user", "content": prompt}],
+    result = subprocess.run(
+        [
+            "claude", "-p",
+            "--bare",
+            "--model", "sonnet",
+        ],
+        input=prompt,
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
 
-    text = response.content[0].text.strip()
+    if result.returncode != 0:
+        raise RuntimeError(f"claude -p failed: {result.stderr[:200]}")
+
+    text = result.stdout.strip()
     # Strip markdown fences if present
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
@@ -129,15 +136,22 @@ def git_revert(target: str):
 def main():
     parser = argparse.ArgumentParser(description="PM AutoResearch Loop Runner")
     parser.add_argument("--target", required=True, help="Path to target.md")
-    parser.add_argument("--eval", required=True, help="Path to eval.py")
+    parser.add_argument("--scoring", "--eval", required=True, dest="scoring", help="Path to scoring harness (e.g. eval.py)")
     parser.add_argument("--program", default="program.md", help="Path to program.md")
     parser.add_argument("--max-rounds", type=int, default=50, help="Max experiment rounds")
     parser.add_argument("--tag", default=None, help="Git branch tag (default: date)")
     parser.add_argument("--plateau-limit", type=int, default=10, help="Stop after N consecutive reverts")
     args = parser.parse_args()
 
+    # Check claude CLI is available
+    stdout, _, rc = run_command("claude --version")
+    if rc != 0:
+        print("ERROR: claude CLI not found. Install Claude Code first.")
+        sys.exit(1)
+    print(f"Using claude CLI: {stdout.strip()}")
+
     # Validate files exist
-    for f in [args.target, args.eval]:
+    for f in [args.target, args.scoring]:
         if not os.path.exists(f):
             print(f"ERROR: {f} not found")
             sys.exit(1)
@@ -159,10 +173,10 @@ def main():
         f.write("round\tscore\tpassing\ttotal\thypothesis\tchange_description\tkept\n")
 
     # Run baseline
-    print("Running baseline eval...")
-    baseline = run_eval(args.eval, args.target)
+    print("Running baseline scoring...")
+    baseline = run_scoring(args.scoring, args.target)
     if "error" in baseline:
-        print(f"Baseline eval failed: {baseline['error']}")
+        print(f"Baseline scoring failed: {baseline['error']}")
         sys.exit(1)
 
     best_score = baseline["composite_score"]
@@ -172,7 +186,6 @@ def main():
     with open(results_path, "a") as f:
         f.write(f"0\t{best_score}\t{baseline['passing']}\t{baseline['total']}\tbaseline\tbaseline\ttrue\n")
 
-    client = anthropic.Anthropic()
     history = []
     consecutive_reverts = 0
 
@@ -181,12 +194,12 @@ def main():
         print(f"Round {round_num}/{args.max_rounds} | Best: {best_score}%")
         print(f"{'='*40}")
 
-        # Get current failing evals
-        current_eval = run_eval(args.eval, args.target)
-        failing = get_failing_evals(current_eval)
+        # Get current failing checks
+        current_results = run_scoring(args.scoring, args.target)
+        failing = get_failing_checks(current_results)
 
         if not failing:
-            print("All evals passing! Score: 100%")
+            print("All checks passing! Score: 100%")
             break
 
         # Propose edit
@@ -194,7 +207,7 @@ def main():
             current_content = f.read()
 
         try:
-            proposal = propose_edit(client, current_content, failing, history, program)
+            proposal = propose_edit(current_content, failing, history, program)
         except Exception as e:
             print(f"  Proposal failed: {e}")
             history.append({"round": round_num, "score": best_score, "change": "PROPOSAL_ERROR", "kept": False})
@@ -208,11 +221,11 @@ def main():
         with open(args.target, "w") as f:
             f.write(proposal["new_document"])
 
-        # Run eval
-        new_eval = run_eval(args.eval, args.target)
-        new_score = new_eval.get("composite_score", 0)
-        passing = new_eval.get("passing", 0)
-        total = new_eval.get("total", 0)
+        # Run scoring
+        new_results = run_scoring(args.scoring, args.target)
+        new_score = new_results.get("composite_score", 0)
+        passing = new_results.get("passing", 0)
+        total = new_results.get("total", 0)
 
         print(f"  Score: {new_score}% (was {best_score}%)")
 
@@ -247,7 +260,7 @@ def main():
             print(f"\nPLATEAU: {consecutive_reverts} consecutive reverts. Stopping.")
             break
 
-        time.sleep(1)  # brief pause between rounds
+        time.sleep(1)
 
     # Summary
     print(f"\n{'='*50}")

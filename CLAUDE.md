@@ -153,7 +153,6 @@ The improved SKILL.md then gets copied back to `.claude/skills/pm-autoresearch/S
 ### Step 1: Setup
 ```bash
 cd meta-run
-export ANTHROPIC_API_KEY=sk-ant-...
 chmod +x setup.sh
 ./setup.sh
 ```
@@ -171,7 +170,7 @@ claude "Read program.md and begin the autoresearch loop on target.md"
 ```bash
 python3 ../scripts/run_loop.py \
   --target target.md \
-  --eval eval.py \
+  --scoring eval.py \
   --program program.md \
   --max-rounds 30 \
   --tag meta-v1
