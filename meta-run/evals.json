@@ -1,0 +1,110 @@
+[
+    {
+        "id": "workflow_numbered_steps",
+        "category": "instructional_clarity",
+        "check": "Does the skill define a clear step-by-step workflow where each step is numbered and starts with an action verb specifying what to produce or do?",
+        "weight": 1.5
+    },
+    {
+        "id": "decision_points_explicit",
+        "category": "instructional_clarity",
+        "check": "Does the skill explicitly define decision points with conditional logic (if X then Y, if Z then W) for at least 3 different situations the user or agent might encounter?",
+        "weight": 1.5
+    },
+    {
+        "id": "no_ambiguous_instructions",
+        "category": "instructional_clarity",
+        "check": "Is every instruction in the skill specific enough that two different Claude instances following it would produce substantially the same behavior? Are there zero instances of vague directives like 'consider', 'think about', or 'as needed' without further specification?",
+        "weight": 1.0
+    },
+    {
+        "id": "commands_copy_pasteable",
+        "category": "instructional_clarity",
+        "check": "Is every shell command and code snippet in the skill complete and copy-pasteable without requiring the reader to fill in unspecified arguments or paths?",
+        "weight": 1.0
+    },
+    {
+        "id": "covers_setup_phase",
+        "category": "completeness",
+        "check": "Does the skill thoroughly cover the initialization and setup phase, including git initialization, baseline eval run, results.tsv creation, and branch setup, with explicit commands for each?",
+        "weight": 1.0
+    },
+    {
+        "id": "covers_iteration_phase",
+        "category": "completeness",
+        "check": "Does the skill describe the iteration loop in enough detail that an agent could execute it autonomously, including: how to read eval results, how to form a hypothesis, how to make an edit, how to run the eval, how to interpret the score, and how to keep or revert?",
+        "weight": 1.5
+    },
+    {
+        "id": "covers_analysis_phase",
+        "category": "completeness",
+        "check": "Does the skill explain how to analyze results after a run completes, including what to look for in the experiment log, how to detect plateaus, and what actions to take based on the analysis?",
+        "weight": 1.0
+    },
+    {
+        "id": "error_handling_documented",
+        "category": "completeness",
+        "check": "Does the skill address at least 3 specific failure modes or error cases (such as eval crashes, API errors, git conflicts, score regression, plateau) with concrete recovery steps for each?",
+        "weight": 1.0
+    },
+    {
+        "id": "cost_estimation_specific",
+        "category": "completeness",
+        "check": "Does the skill provide a specific cost estimate per round AND per full run, with the model and approximate token counts that drive those numbers?",
+        "weight": 0.5
+    },
+    {
+        "id": "good_eval_examples_with_contrast",
+        "category": "eval_framework",
+        "check": "Does the skill provide at least 3 examples of GOOD binary evals AND at least 3 examples of BAD binary evals, with explicit explanations of why each is good or bad?",
+        "weight": 1.5
+    },
+    {
+        "id": "eval_evolution_guidance",
+        "category": "eval_framework",
+        "check": "Does the skill explain how to evolve the eval suite between runs, including when to add harder evals, when to remove saturated ones, and when to adjust weights, with concrete criteria for each decision?",
+        "weight": 1.0
+    },
+    {
+        "id": "eval_templates_three_types",
+        "category": "eval_framework",
+        "check": "Does the skill provide complete, ready-to-use eval templates (not just category names, but actual eval check questions) for at least 3 different document types?",
+        "weight": 1.0
+    },
+    {
+        "id": "scoring_model_explained",
+        "category": "eval_framework",
+        "check": "Does the skill explain the scoring model in detail, including how weights work, what the composite score formula is, and what the keep/revert threshold logic is?",
+        "weight": 1.0
+    },
+    {
+        "id": "pattern_self_contained",
+        "category": "self_containment",
+        "check": "Does the skill explain the autoresearch pattern (loop, ratchet, single-file constraint, locked eval) thoroughly enough that someone who has never heard of Karpathy's autoresearch could understand and use it without reading any external source?",
+        "weight": 1.5
+    },
+    {
+        "id": "no_undefined_references",
+        "category": "self_containment",
+        "check": "Does every file path, script name, and template referenced in the skill have its purpose explained and its location specified, with no dangling references to files or tools that are mentioned but not described?",
+        "weight": 1.0
+    },
+    {
+        "id": "adaptation_has_specific_evals",
+        "category": "adaptation",
+        "check": "For each document type the skill claims to support (PRDs, strategy docs, prompts, etc.), does it provide at least 5 specific, ready-to-use binary eval check questions (not just category labels like 'focus on logical coherence')?",
+        "weight": 1.5
+    },
+    {
+        "id": "adaptation_has_program_hints",
+        "category": "adaptation",
+        "check": "For each document type the skill claims to support, does it provide specific research direction hints that an agent should explore, tailored to that document type?",
+        "weight": 1.0
+    },
+    {
+        "id": "trigger_description_comprehensive",
+        "category": "triggering",
+        "check": "Does the skill's description (in the YAML frontmatter) include at least 8 distinct trigger phrases or contexts that would cause it to activate, covering variations in how a user might request this capability?",
+        "weight": 0.5
+    }
+]
