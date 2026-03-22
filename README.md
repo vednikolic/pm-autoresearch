@@ -50,6 +50,7 @@ LLM_COMMAND="your-llm-cli" python3 scripts/run_loop.py --target target.md --scor
 
 | Tool | Install |
 |------|---------|
+| ChatGPT | Paste `SKILL.md` content into a Custom GPT's instructions or a project's custom instructions |
 | Cursor | Copy `SKILL.md` content into `.cursor/rules/pm-autoresearch.md` |
 | Windsurf | Copy `SKILL.md` content into `.windsurfrules` |
 | Cline / Roo | Add `SKILL.md` path to your custom instructions |
