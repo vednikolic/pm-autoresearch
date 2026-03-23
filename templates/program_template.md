@@ -1,80 +1,77 @@
-# PM AutoResearch: Agent Loop Instructions
+# AutoResearch: Agent Loop Instructions
 
-You are an autonomous document researcher. Your job is to iteratively improve `target.md` by making focused changes, scoring them against `eval.py`, and keeping only improvements.
+You are an autonomous document researcher. Your job is to iteratively improve `target.md` by making focused changes, scoring them against `eval.py`, and keeping only strict improvements.
 
 ## Setup (one time)
 
 1. Create a branch: `git checkout -b autoresearch/<tag>` from current master
 2. Read these files for context:
-   - `target.md` — the document you will modify. This is your ONLY editable file.
-   - `eval.py` — the scoring harness. DO NOT MODIFY. DO NOT READ TO GAME.
-   - `results.tsv` — experiment log. Create with header if missing.
-3. Run the baseline: `python eval.py target.md > baseline.log`
-4. Record baseline score in `results.tsv`
-5. Begin experimentation.
+   - `target.md` -- the document you will modify. This is your ONLY editable file.
+   - `eval.py` -- the scoring harness. DO NOT MODIFY. DO NOT READ THE EVALS TO GAME THEM.
+   - `evals.json` -- eval definitions (reference only). DO NOT MODIFY.
+3. Run the baseline: `python eval.py target.md --verbose > baseline.log 2>&1`
+4. Read baseline.log. Record the composite_score and individual pass/fail results.
+5. Create results.tsv: `echo -e "round\tscore\tpassing\ttotal\thypothesis\tchange_description\tkept" > results.tsv`
+6. Record baseline as round 0.
+7. Begin experimentation.
 
 ## Experiment Loop
 
-Each round follows this exact sequence:
+Each round, in exact order:
 
-### 1. Analyze Current State
-Read `target.md` and the most recent eval results. Identify the weakest category or specific failing evals.
+### 1. Read current eval results
+Run `python eval.py target.md --verbose` and identify failing evals by category.
 
-### 2. Form a Hypothesis
-Before editing, write a one-sentence hypothesis in your thinking:
-"Adding [specific change] should improve [specific eval or category] because [reasoning]."
+### 2. Form a hypothesis
+Before editing, state: "Adding [specific content] to [specific section] should flip [specific eval ID] from FAIL to PASS because [the eval requires X and the document currently lacks X]."
 
-### 3. Make ONE Focused Change
-Edit `target.md` with a single, targeted improvement. Do NOT make multiple unrelated changes in one round. If you change two things and the score goes up, you won't know which one helped.
+### 3. Make ONE focused change
+Edit target.md with a single targeted improvement. ONE change per round. If you change two things and the score goes up, you cannot attribute the improvement.
 
-Examples of good single changes:
+GOOD single changes:
 - Add a non-goals section listing 3 explicit exclusions
 - Replace vague timeline "Q3" with specific dates for each milestone
 - Add competitive benchmarks to support the growth target
 - Rewrite the problem statement to include quantitative impact data
 
-Examples of bad changes (too broad):
+BAD changes (too broad, will obscure what helped):
 - Rewrite the entire document
-- Add five new sections at once
-- Change the structure AND add new content
+- Add three new sections at once
+- Restructure AND add content simultaneously
 
-### 4. Run the Eval
+### 4. Run the eval
 ```bash
-python eval.py target.md > run.log 2>&1
+python eval.py target.md --verbose > run.log 2>&1
 ```
+Read composite_score from run.log.
 
-Read the composite score from run.log.
+### 5. Keep or revert
 
-### 5. Keep or Revert
-
-**If composite_score IMPROVED (strictly greater than previous best):**
+Score STRICTLY IMPROVED (new > previous best):
 ```bash
 git add target.md
 git commit -m "autoresearch: [brief description of change] | score: [new_score]"
 ```
 This is your new baseline.
 
-**If composite_score is EQUAL or WORSE:**
+Score EQUAL or WORSE:
 ```bash
 git checkout -- target.md
 ```
 Revert immediately. Do not try to salvage.
 
-### 6. Log the Result
-Append to `results.tsv` (tab separated):
-```
-round\tscore\tpassing\ttotal\thypothesis\tchange_description\tkept
-```
+### 6. Log to results.tsv
+Append: round, score, passing, total, hypothesis, change_description, kept (tab separated)
 
 ### 7. Repeat
-Go back to step 1. Continue until:
-- You reach the max rounds specified by the human
-- You hit 100% score
-- You have 10 consecutive reverts (plateau — stop and report)
+Continue until:
+- Max rounds completed (specified by the human)
+- 100% score reached
+- 10 consecutive reverts (plateau -- stop and report)
 
-## Research Direction Hints
+## Research Direction Hints (priority order)
 
-<!-- CUSTOMIZE THESE for your specific document -->
+<!-- CUSTOMIZE THESE for your specific document and failing evals -->
 Explore improvements in this priority order:
 1. Fix any failing STRUCTURE evals first (the skeleton must exist before you polish)
 2. Address REASONING gaps (logical connections between sections)
@@ -93,17 +90,18 @@ Explore improvements in this priority order:
 
 ## Error Handling
 
-If `eval.py` crashes:
-- Read the last 50 lines of run.log for the error
-- If it's a parsing issue with your edits (e.g., you introduced malformed markdown), revert and try differently
-- If it's an API error, wait 30 seconds and retry once
-- If it persists after 2 retries, log "CRASH" in results.tsv and move on to the next hypothesis
+If eval.py crashes:
+1. Run `tail -50 run.log` to read the traceback
+2. If it is a malformed markdown issue from your edit, revert with `git checkout -- target.md` and try a different approach
+3. If it is an API or timeout error, wait 60 seconds and retry once
+4. If it crashes twice on the same edit, revert and move to a different hypothesis
+5. Log "CRASH" in the kept column of results.tsv
 
 ## End of Run
 
 When the loop ends, output a summary:
-1. Starting score → Final score
-2. Number of rounds run
-3. Number of improvements kept
-4. Top 3 most impactful changes (largest score jumps)
-5. Remaining failing evals and suggested next steps for the human
+1. Starting score -> Final score
+2. Number of rounds run, improvements kept, reverts
+3. Top 3 most impactful changes (largest score jumps)
+4. Remaining failing evals with suggested next steps
+5. Recommend whether a second run with tightened evals is warranted

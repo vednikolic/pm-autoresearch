@@ -226,8 +226,9 @@ All paths relative to the repository root.
 | File | Purpose | Read when |
 |---|---|---|
 | `references/eval-design.md` | How to write good binary evals per document type | Always read before creating evals |
-| `templates/eval_template.py` | Eval harness template | When generating eval.py |
-| `templates/program_template.md` | Agent loop instructions template | When setting up program.md |
+| `templates/eval_template.py` | Eval harness template (uses `claude -p` / LLM_COMMAND, loads from evals.json) | When generating eval.py |
+| `templates/evals_template.json` | Example eval definitions (PRD evals) showing the id/category/check/weight format | When writing evals.json for a new run |
+| `templates/program_template.md` | Agent loop instructions template with CUSTOMIZE markers | When setting up program.md |
 | `scripts/generate_eval.py` | Auto-generates eval.py from evals.json | During setup |
 | `scripts/run_loop.py` | Orchestrates the full autoresearch loop | To run autonomously |
 | `scripts/analyze_results.py` | Summarizes experiment log | After a run completes |
