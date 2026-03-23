@@ -69,19 +69,11 @@ Continue until:
 
 ## Research Direction Hints (priority order)
 
-1. **Adaptation sections are thin.** The skill says "focus evals on: logical coherence..." but does not provide actual eval check questions for each document type. Each adaptation section needs at least 5 copy-paste-ready binary eval questions, not category labels.
+Current score: 95% (18/20). Two remaining failures, both in instructional_clarity (0.5w each):
 
-2. **No bad eval examples.** The skill shows good eval examples but never shows what bad evals look like or why they fail. Add explicit anti-patterns with explanations.
+1. **behavioral_consistency (FAIL)**: "Is every instruction specific enough that two Claude instances following it would produce substantially the same behavior?" Scan every instruction in the skill for ambiguity where two agents might diverge. Replace any instruction that leaves room for interpretation with a deterministic directive. Target areas: which model to use for scoring, how to handle partial JSON responses, what "focused change" means concretely (word count, section count).
 
-3. **Error handling is sparse.** The "Important Notes" section mentions cost but doesn't cover what happens when eval.py crashes, when the API rate limits, when git gets into a bad state, or when the agent hits a plateau. Add concrete recovery procedures.
-
-4. **Decision logic is implicit.** When should the user choose 10 evals vs 20? When should weights be 1.5 vs 0.5? When should they use the run_loop.py script vs Claude Code directly? These decision points need explicit if/then guidance.
-
-5. **Scoring model is mentioned but not explained in SKILL.md itself.** The eval-design.md reference has the formula, but SKILL.md should contain the core scoring logic (weighted sum, keep threshold) directly so it's self-contained.
-
-6. **Program.md hints per document type are missing.** The adaptation section tells you what to eval but not what research directions to give the agent for each document type.
-
-7. **The iteration loop description could be tighter.** Step 5 in the "How It Works" section is minimal. The agent needs to know: read which specific fields from the output, compare against what stored value, and execute which exact git command.
+2. **no_unqualified_vague_words (FAIL)**: "Are there zero instances of vague directives like 'consider', 'think about', or 'as needed' that appear without an immediately following specification of the exact action to take?" Grep the document for every instance of 'consider', 'think about', 'as needed', 'try to', 'if appropriate' and either remove the phrase or add an explicit follow-up action. Each instance must either be deleted or paired with a concrete "do X" instruction.
 
 ## Constraints
 

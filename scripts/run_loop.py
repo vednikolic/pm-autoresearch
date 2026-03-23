@@ -2,19 +2,18 @@
 """
 PM AutoResearch Loop Runner
 
-Orchestrates the full autoresearch loop: edit target via LLM,
+Orchestrates the full autoresearch loop: edit target via Claude,
 run scoring, keep or revert, log results, repeat.
 
-Uses `claude -p` by default. Set LLM_COMMAND env var to use a different backend.
-The LLM command must accept a prompt on stdin and return the response on stdout.
+Uses `claude -p` (Claude Code CLI) instead of the Anthropic API.
+Runs on a Pro subscription with no API key required.
 
 Usage:
     python run_loop.py --target target.md --scoring scoring.py --max-rounds 50
     python run_loop.py --target target.md --scoring scoring.py --max-rounds 50 --tag mar21
-    LLM_COMMAND="your-llm-cli" python run_loop.py --target target.md --scoring scoring.py --max-rounds 50
 
 Requirements:
-    - An LLM CLI installed and authenticated (claude, or set LLM_COMMAND)
+    - claude CLI installed and authenticated
     - git initialized in the working directory
     - scoring.py and target.md present
 """
@@ -26,6 +25,10 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from functools import partial
+
+# Unbuffered print so terminal shows progress immediately
+print = partial(print, flush=True)
 
 
 def run_command(cmd: str, timeout: int = 120) -> tuple:
@@ -101,17 +104,19 @@ Respond with JSON only:
     "new_document": "The complete updated document content"
 }}"""
 
-    llm_command = os.environ.get("LLM_COMMAND", "claude -p --model sonnet").split()
     result = subprocess.run(
-        llm_command,
+        [
+            "claude", "-p",
+            "--model", "sonnet",
+        ],
         input=prompt,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
     )
 
     if result.returncode != 0:
-        raise RuntimeError(f"LLM command failed: {result.stderr[:200]}")
+        raise RuntimeError(f"claude -p failed: {result.stderr[:200]}")
 
     text = result.stdout.strip()
     # Strip markdown fences if present
@@ -141,13 +146,12 @@ def main():
     parser.add_argument("--plateau-limit", type=int, default=10, help="Stop after N consecutive reverts")
     args = parser.parse_args()
 
-    # Check LLM CLI is available
-    llm_cmd = os.environ.get("LLM_COMMAND", "claude -p --model sonnet").split()[0]
-    stdout, _, rc = run_command(f"{llm_cmd} --version")
+    # Check claude CLI is available
+    stdout, _, rc = run_command("claude --version")
     if rc != 0:
-        print(f"ERROR: {llm_cmd} CLI not found. Install it or set LLM_COMMAND env var.")
+        print("ERROR: claude CLI not found. Install Claude Code first.")
         sys.exit(1)
-    print(f"Using LLM CLI: {llm_cmd} ({stdout.strip()})")
+    print(f"Using claude CLI: {stdout.strip()}")
 
     # Validate files exist
     for f in [args.target, args.scoring]:
@@ -187,15 +191,15 @@ def main():
 
     history = []
     consecutive_reverts = 0
+    last_results = baseline  # Reuse baseline; only re-score after edits
 
     for round_num in range(1, args.max_rounds + 1):
         print(f"\n{'='*40}")
         print(f"Round {round_num}/{args.max_rounds} | Best: {best_score}%")
         print(f"{'='*40}")
 
-        # Get current failing checks
-        current_results = run_scoring(args.scoring, args.target)
-        failing = get_failing_checks(current_results)
+        # Use previous round's results for failing checks (avoids double-scoring)
+        failing = get_failing_checks(last_results)
 
         if not failing:
             print("All checks passing! Score: 100%")
@@ -233,11 +237,13 @@ def main():
             git_commit(args.target, f"autoresearch: {proposal['change_description']} | score: {new_score}")
             print(f"  KEPT (+{round(new_score - best_score, 2)}%)")
             best_score = new_score
+            last_results = new_results  # Carry forward new results
             kept = True
             consecutive_reverts = 0
         else:
             git_revert(args.target)
             print(f"  REVERTED")
+            # last_results stays unchanged (document reverted to previous state)
             kept = False
             consecutive_reverts += 1
 

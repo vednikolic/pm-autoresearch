@@ -202,7 +202,7 @@ python3 scripts/run_loop.py --target target.md --scoring eval.py --program progr
 
 The automated runner uses `claude -p` by default. Set `LLM_COMMAND` to use a different backend:
 ```bash
-LLM_COMMAND="your-llm-cli" python3 scripts/run_loop.py --target target.md --scoring eval.py --max-rounds 30
+LLM_COMMAND="ollama run llama3" python3 scripts/run_loop.py --target target.md --scoring eval.py --max-rounds 30
 ```
 
 ## Step 6: Review the Experiment Log

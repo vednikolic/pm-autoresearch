@@ -4,8 +4,8 @@ PM AutoResearch Meta-Run Eval Harness
 Scores SKILL.md quality with 18 strict binary evals.
 DO NOT MODIFY. The agent cannot touch this file.
 
-Uses `claude -p` by default. Set LLM_COMMAND env var to use a different backend.
-The LLM command must accept a prompt on stdin and return the response on stdout.
+Uses `claude -p` (Claude Code CLI) instead of the Anthropic API.
+Runs on a Pro subscription with no API key required.
 
 Usage:
     python eval.py target.md
@@ -32,16 +32,28 @@ EVALS = [
         "weight": 1.5
     },
     {
-        "id": "no_ambiguous_instructions",
+        "id": "behavioral_consistency",
         "category": "instructional_clarity",
-        "check": "Is every instruction in the skill specific enough that two different Claude instances following it would produce substantially the same behavior? Are there zero instances of vague directives like 'consider', 'think about', or 'as needed' without further specification?",
-        "weight": 1.0
+        "check": "Is every instruction in the skill specific enough that two different Claude instances following it would produce substantially the same behavior?",
+        "weight": 0.5
     },
     {
-        "id": "commands_copy_pasteable",
+        "id": "no_unqualified_vague_words",
         "category": "instructional_clarity",
-        "check": "Is every shell command and code snippet in the skill complete and copy-pasteable without requiring the reader to fill in unspecified arguments or paths?",
-        "weight": 1.0
+        "check": "Are there zero instances of vague directives like 'consider', 'think about', or 'as needed' that appear without an immediately following specification of the exact action to take?",
+        "weight": 0.5
+    },
+    {
+        "id": "workflow_commands_copy_pasteable",
+        "category": "instructional_clarity",
+        "check": "Are all shell commands in the numbered setup and workflow steps (Steps 1 through 6) complete and copy-pasteable without requiring the reader to fill in placeholder arguments or paths?",
+        "weight": 0.5
+    },
+    {
+        "id": "example_commands_use_concrete_values",
+        "category": "instructional_clarity",
+        "check": "When the skill shows example shell commands outside the core workflow (such as LLM_COMMAND usage or script invocations), does it use a concrete, realistic example value rather than an abstract placeholder like 'your-X-here'?",
+        "weight": 0.5
     },
     {
         "id": "covers_setup_phase",
@@ -141,7 +153,7 @@ Rules:
 
 
 def evaluate_single(document: str, eval_item: dict) -> dict:
-    """Run a single binary eval via LLM CLI."""
+    """Run a single binary eval via claude -p."""
     prompt = f"""<document>
 {document}
 </document>
@@ -151,16 +163,13 @@ Question: {eval_item['check']}
 Answer YES or NO only."""
 
     try:
-        llm_command = os.environ.get("LLM_COMMAND", "claude -p --model sonnet").split()
-        cmd = llm_command[:]
-        if cmd[0] == "claude":
-            cmd.extend(["--system-prompt", JUDGE_SYSTEM])
-            llm_input = prompt
-        else:
-            llm_input = f"{JUDGE_SYSTEM}\n\n{prompt}"
         result = subprocess.run(
-            cmd,
-            input=llm_input,
+            [
+                "claude", "-p",
+                "--model", "sonnet",
+                "--system-prompt", JUDGE_SYSTEM,
+            ],
+            input=prompt,
             capture_output=True,
             text=True,
             timeout=60,
