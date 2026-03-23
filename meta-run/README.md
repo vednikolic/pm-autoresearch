@@ -6,7 +6,7 @@ Running pm-autoresearch on its own SKILL.md to improve it.
 
 ```
 meta-run/
-  eval.py          # Locked scoring harness (18 strict binary evals). DO NOT EDIT.
+  eval.py          # Locked scoring harness (20 strict binary evals). DO NOT EDIT.
   evals.json       # Eval definitions (reference copy)
   program.md       # Agent loop instructions
   setup.sh         # One-time setup script
@@ -30,7 +30,7 @@ Then either:
 claude "Read program.md and begin the autoresearch loop on target.md"
 
 # Option B: Automated loop
-python3 ../pm-autoresearch/scripts/run_loop.py \
+python3 ../scripts/run_loop.py \
   --target target.md \
   --eval eval.py \
   --program program.md \
@@ -45,17 +45,17 @@ python3 ../pm-autoresearch/scripts/run_loop.py \
 git log --oneline autoresearch/meta-v1
 
 # Analyze results
-python3 ../pm-autoresearch/scripts/analyze_results.py results.tsv
+python3 ../scripts/analyze_results.py results.tsv
 
 # Copy improved SKILL.md back
-cp target.md ../pm-autoresearch/SKILL.md
+cp target.md ../.claude/skills/pm-autoresearch/SKILL.md
 ```
 
-## Eval Categories (18 evals total)
+## Eval Categories (20 evals total)
 
 | Category | Count | Weight | What it tests |
 |---|---|---|---|
-| instructional_clarity | 4 | 5.0 | Can an agent follow the instructions unambiguously? |
+| instructional_clarity | 6 | 5.0 | Can an agent follow the instructions unambiguously? |
 | completeness | 5 | 5.0 | Setup, iteration, analysis, errors, cost all covered? |
 | eval_framework | 4 | 4.5 | Good/bad examples, evolution guidance, templates, scoring? |
 | self_containment | 2 | 2.5 | Usable without external reading? |

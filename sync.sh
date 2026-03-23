@@ -39,6 +39,7 @@ case "${1:-}" in
     push)
         echo "Pushing from standalone repo -> workspace"
         cp "$SCRIPT_DIR/.claude/skills/pm-autoresearch/SKILL.md" "$WORKSPACE_SKILL"
+        cp "$SCRIPT_DIR/CLAUDE.md" "$WORKSPACE_PROJECT/CLAUDE.md"
         cp "$SCRIPT_DIR/references/"* "$WORKSPACE_PROJECT/references/"
         cp "$SCRIPT_DIR/scripts/"* "$WORKSPACE_PROJECT/scripts/"
         cp "$SCRIPT_DIR/templates/"* "$WORKSPACE_PROJECT/templates/"

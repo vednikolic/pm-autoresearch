@@ -178,11 +178,12 @@ pm-autoresearch/
 │   └── analyze_results.py    # Post-run analysis
 ├── templates/
 │   ├── eval_template.py      # Eval harness boilerplate
+│   ├── evals_template.json   # Example eval definitions for PRDs
 │   └── program_template.md   # Agent loop instruction boilerplate
 ├── references/
 │   └── eval-design.md        # Deep guide on writing good binary evals
 └── meta-run/                 # Example: the skill improving itself
-    ├── eval.py               # 18 binary evals scoring SKILL.md quality
+    ├── eval.py               # 20 binary evals scoring SKILL.md quality
     ├── evals.json            # Eval definitions
     ├── program.md            # Agent loop instructions for this run
     ├── setup.sh              # One-time init script
@@ -191,7 +192,7 @@ pm-autoresearch/
 
 ## Meta-Run: The Skill Improving Itself
 
-The `meta-run/` directory contains a complete example where the skill was used to improve its own SKILL.md. Starting from a 15% baseline score, the autoresearch loop brought it to 90%+ across 18 binary evals in under 10 rounds. See `meta-run/README.md` for details.
+The `meta-run/` directory contains a complete example where the skill was used to improve its own SKILL.md. Starting from a 15% baseline score, the autoresearch loop brought it to 90%+ across 20 binary evals in under 10 rounds. See `meta-run/README.md` for details.
 
 ## Adapting for Different Document Types
 

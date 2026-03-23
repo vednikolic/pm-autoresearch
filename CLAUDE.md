@@ -29,7 +29,7 @@ The autoresearch loop replaces manual prompt/document tweaking with an automated
 │   └── program_template.md        # Boilerplate for writing agent loop instructions
 │
 └── meta-run/                      # The self-improvement run (current task)
-    ├── eval.py                    # LOCKED. 18 strict binary evals scoring SKILL.md quality.
+    ├── eval.py                    # LOCKED. 20 strict binary evals scoring SKILL.md quality.
     ├── evals.json                 # The eval definitions (reference copy, also locked)
     ├── program.md                 # Agent loop instructions for this specific run
     ├── setup.sh                   # One-time init: copies SKILL.md to target.md, inits git, runs baseline
@@ -63,10 +63,10 @@ Boilerplate eval harness with example PRD evals pre-filled. For hand-crafting ev
 Generic agent loop instructions. Covers setup, the 7-step experiment cycle, research direction hints (customize these), constraints, error handling, and end-of-run reporting. Fork this for each new run.
 
 ### `meta-run/eval.py`
-THE LOCKED SCORING HARNESS. Contains 18 binary evals across 6 categories, with a strict judge system prompt. Calls Claude Sonnet via the Anthropic API to answer each eval question YES/NO against the document. Outputs composite_score (weighted percentage), category breakdown, and individual pass/fail. **The agent must never modify this file.** If the agent could change the evals, it would just make the test easier instead of making the document better.
+THE LOCKED SCORING HARNESS. Contains 20 binary evals across 6 categories, with a strict judge system prompt. Calls Claude Sonnet via the Anthropic API to answer each eval question YES/NO against the document. Outputs composite_score (weighted percentage), category breakdown, and individual pass/fail. **The agent must never modify this file.** If the agent could change the evals, it would just make the test easier instead of making the document better.
 
 ### `meta-run/evals.json`
-The 18 eval definitions in JSON format. Reference copy. Same data as what's hardcoded in eval.py. Exists so you can review and evolve the evals between runs without reading Python.
+The 20 eval definitions in JSON format. Reference copy. Same data as what's hardcoded in eval.py. Exists so you can review and evolve the evals between runs without reading Python.
 
 ### `meta-run/program.md`
 Agent instructions for this specific run. Contains: setup steps, the 7-step experiment loop, 7 prioritized research direction hints (what's weak in SKILL.md and what to try), constraints (preserve the three-file mapping table, stay under 600 lines, don't invent fake data), error handling procedures, and end-of-run reporting format.
@@ -74,17 +74,19 @@ Agent instructions for this specific run. Contains: setup steps, the 7-step expe
 ### `meta-run/setup.sh`
 One-time initialization. Copies SKILL.md to target.md, initializes git, creates .gitignore, commits the baseline, creates results.tsv, runs the baseline eval, and prints next steps. Run this once before starting the loop.
 
-## The 18 Evals (What Gets Scored)
+## The 20 Evals (What Gets Scored)
 
-### Instructional Clarity (4 evals, total weight 5.0)
+### Instructional Clarity (6 evals, total weight 5.0)
 These test whether an agent following SKILL.md would know exactly what to do at every step.
 
 | ID | Weight | What it checks |
 |---|---|---|
 | `workflow_numbered_steps` | 1.5 | Every step numbered with an action verb and a specified output |
 | `decision_points_explicit` | 1.5 | At least 3 if/then decision points for different situations |
-| `no_ambiguous_instructions` | 1.0 | Zero instances of vague directives ("consider", "as needed") |
-| `commands_copy_pasteable` | 1.0 | Every command complete without unspecified arguments |
+| `behavioral_consistency` | 0.5 | Two different Claude instances would produce the same structure |
+| `no_unqualified_vague_words` | 0.5 | Zero vague directives like "consider", "think about" |
+| `workflow_commands_copy_pasteable` | 0.5 | All commands in workflow steps are complete |
+| `example_commands_use_concrete_values` | 0.5 | Example commands use concrete values, not placeholders |
 
 ### Completeness (5 evals, total weight 5.0)
 These test whether the skill covers the full lifecycle.
@@ -134,7 +136,7 @@ Tests whether the YAML description catches relevant queries.
 
 ## Desired Outcome
 
-After the meta-run completes, SKILL.md should score 85%+ on these 18 evals. Concretely that means:
+After the meta-run completes, SKILL.md should score 85%+ on these 20 evals. Concretely that means:
 
 1. The adaptation sections contain actual eval questions, not just category names
 2. There are explicit good and bad eval examples with explanations
