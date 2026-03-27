@@ -246,7 +246,7 @@ Set `WORKSPACE_ROOT` if your workspace is not at `~/claude`.
 
 ## Author
 
-Ved Nikolic ([vednikolic](https://github.com/vednikolic)) -- ved@vednikolic.com
+Ved Nikolic ([vednikolic](https://github.com/vednikolic))
 
 ## License
 
