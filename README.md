@@ -1,8 +1,37 @@
 # PM AutoResearch
 
+<div align="center">
+
+<img src="https://img.shields.io/badge/LLM--agnostic-works%20with%20any%20model-gray?style=for-the-badge" />
+<img src="https://img.shields.io/badge/pattern-Karpathy%20autoresearch-F59E0B?style=for-the-badge" />
+<img src="https://img.shields.io/badge/eval%20score-95%25-10B981?style=for-the-badge" />
+<img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" />
+
+</div>
+
+<br />
+
 An adaptation of [Karpathy's autoresearch pattern](https://x.com/karpathy/status/1886192184808149383) for PM documents. Instead of optimizing `train.py` against validation loss, you optimize a **target document** (strategy, PRD, prompt, skill) against a **binary eval suite** that scores quality programmatically.
 
 An agent edits the document in a loop. Each round: propose one change, score it, keep if improved, revert if not. Git is the ratchet. Every improvement is committed. Every failure is reverted. The experiment log shows what worked and why.
+
+```
+  SCORE
+  100% |                                          .......*******
+       |                                   ......*
+   75% |                             .....*
+       |                        ....*
+   50% |                   ...*
+       |              ...*
+   25% |         ...*
+       |    ...*
+    0% |__*____________________________________________
+       R1  R2  R3  R4  R5  R6  R7  R8  R9  R10    ROUND
+
+       * each dot = one round of automated improvement
+       * git commits on improvement, reverts on regression
+       * stops when evals saturate
+```
 
 ## What It Does
 
