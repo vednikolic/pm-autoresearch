@@ -37,7 +37,9 @@ That is what makes them scorable.
 
 ## How It Works
 
-You give it three things:
+You point it at a document. The agent reads your doc, generates a tailored set of binary evals based on the document type and content, and starts iterating. You do not need to write evals from scratch. The agent proposes a starting set, you review and adjust, and the loop begins.
+
+The system uses three files:
 
 | File | What it is | Who controls it |
 |------|-----------|----------------|
@@ -81,7 +83,7 @@ Claude Code discovers the skill automatically.
 /pm-autoresearch path/to/your-document.md
 ```
 
-The skill walks you through eval setup, git initialization, and running the loop.
+The agent reads your document, analyzes its structure and content, and suggests a tailored eval suite. You review the evals, adjust any that do not fit, and the loop begins. No blank page.
 
 ### Option B: With Any LLM
 
@@ -109,7 +111,9 @@ LLM_COMMAND="claude -p --model sonnet" python3 scripts/run_loop.py \
 
 ### 1. Define your evals
 
-Create `evals.json` with yes/no questions that test specific qualities:
+When using the skill, the agent reads your document and proposes evals specific to its content. A PRD about a recommendation engine gets evals about metric specificity and integration boundaries. A strategy doc about market expansion gets evals about competitive evidence and resource allocation. You start with a foundation, not a blank page.
+
+If you prefer to write evals by hand or customize the generated set, use `evals.json` with yes/no questions that test specific qualities:
 
 ```json
 [
