@@ -1,0 +1,128 @@
+[
+    {
+        "id": "has_problem_statement_with_impact",
+        "category": "structure",
+        "check": "Does the document contain a problem statement section that includes at least one quantitative measure of the problem's impact (e.g., time lost, frequency, cost, number of affected users or tools)?",
+        "weight": 1.5,
+        "_notes": "Proven in workspace-platform run. Quantified impact forces the author to ground the problem in reality, not just narrative."
+    },
+    {
+        "id": "has_success_metrics_with_targets",
+        "category": "structure",
+        "check": "Does the document define at least 3 success metrics where each metric has a specific numeric target (not just 'improve' or 'increase')?",
+        "weight": 1.5,
+        "_notes": "Universal. Without numeric targets, metrics are directional wishes."
+    },
+    {
+        "id": "has_non_goals_with_rationale",
+        "category": "structure",
+        "check": "Does the document have a non-goals or out-of-scope section where each excluded item includes a brief rationale for why it is excluded?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Rationale prevents scope creep better than bare lists because stakeholders understand the reasoning."
+    },
+    {
+        "id": "has_personas_with_scenario",
+        "category": "structure",
+        "check": "Does the document include at least 2 user personas where each persona has a concrete usage scenario (a narrative of what they do step by step, not just a demographic label or table row)?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Narrative scenarios expose UX assumptions that table rows hide."
+    },
+    {
+        "id": "metrics_trace_to_problem",
+        "category": "reasoning",
+        "check": "Does every success metric directly address an aspect of the stated problem?",
+        "weight": 1.0,
+        "_notes": "Universal. Prevents vanity metrics that measure activity rather than problem resolution."
+    },
+    {
+        "id": "has_evidence",
+        "category": "reasoning",
+        "check": "Does the document cite at least 2 pieces of evidence (user research, data, benchmarks, industry reports) supporting the problem or approach?",
+        "weight": 1.0,
+        "_notes": "Universal. Use [PLACEHOLDER: description] if real data is unavailable. The placeholder itself is a signal to gather data before building."
+    },
+    {
+        "id": "phase1_components_have_acceptance_criteria",
+        "category": "specificity",
+        "check": "Does the first phase or MVP section define acceptance criteria or testable requirements for at least 5 of its components (not just implementation notes, but what 'done' looks like for each)?",
+        "weight": 1.5,
+        "_notes": "Proven in workspace-platform run. Highest-impact eval in the run. Acceptance criteria are the bridge between PRD and engineering tickets."
+    },
+    {
+        "id": "data_model_has_constraints",
+        "category": "specificity",
+        "check": "Does the data model section specify at least 3 constraints or invariants (e.g., uniqueness, required fields, cascade deletes, max sizes) beyond just listing column names and types?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Without constraints, the first engineer writes the migration and has to guess 10 things."
+    },
+    {
+        "id": "api_surface_defined",
+        "category": "specificity",
+        "check": "Does the document define or enumerate at least 5 API endpoints, routes, or key operations that the backend must support, with method, path, and brief payload or purpose?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Forces the author to think through the actual interface, not just the data model."
+    },
+    {
+        "id": "no_vague_timelines",
+        "category": "specificity",
+        "check": "Are all timelines expressed as specific dates, sprint numbers, or duration ranges (not 'soon', 'later', 'eventually', or 'as bandwidth allows')?",
+        "weight": 1.0,
+        "_notes": "Universal. Vague timelines are non-commitments disguised as plans."
+    },
+    {
+        "id": "gate_metrics_measurable",
+        "category": "reasoning",
+        "check": "For each phase gate or milestone metric, does the document specify how the metric will be measured (what tool, query, survey, or process produces the number)?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. A gate without a measurement method is a gate that will never close."
+    },
+    {
+        "id": "open_questions_have_decision_criteria",
+        "category": "reasoning",
+        "check": "Do at least 3 of the open questions specify what information, signal, or threshold would resolve them (not just 'decide later' or 'test in Phase 1')?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Decision criteria turn open questions into testable hypotheses."
+    },
+    {
+        "id": "risks_have_mitigations",
+        "category": "reasoning",
+        "check": "Does every identified risk have at least one mitigation, contingency, or monitoring plan?",
+        "weight": 1.0,
+        "_notes": "Universal. Unmitigated risks are just worries, not analysis."
+    },
+    {
+        "id": "competitive_context_with_specifics",
+        "category": "completeness",
+        "check": "Does the document reference at least 2 competing or adjacent products by name and describe a specific feature or limitation of each that this product addresses differently?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Named competitor features sharpen positioning and prevent building what already exists."
+    },
+    {
+        "id": "onboarding_flow_step_by_step",
+        "category": "completeness",
+        "check": "Does the document describe the first-time user experience as a step-by-step flow (at least 4 steps from signup or install to first value moment)?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Forces thinking about time-to-value, not just features."
+    },
+    {
+        "id": "has_dependencies",
+        "category": "completeness",
+        "check": "Does the document identify external teams, services, APIs, or decisions it depends on, with current status of each dependency?",
+        "weight": 1.0,
+        "_notes": "Universal. Hidden dependencies are the top cause of PRD-to-implementation delays."
+    },
+    {
+        "id": "phase_prereqs_explicit",
+        "category": "reasoning",
+        "check": "If the document has multiple phases, does it explicitly list what infrastructure or capabilities from earlier phases are prerequisites for later phases?",
+        "weight": 1.0,
+        "_notes": "Proven in workspace-platform run. Without explicit prereqs, Phase 2 planning starts with archaeology instead of building."
+    },
+    {
+        "id": "jargon_defined_at_first_use",
+        "category": "clarity",
+        "check": "Are at least 80% of domain-specific terms, acronyms, and technical concepts defined or explained at or near first use (inline parenthetical or glossary)?",
+        "weight": 0.5,
+        "_notes": "Threshold version. The absolute 'every term defined' variant is flaky with LLM judges on long documents. 80% is robust."
+    }
+]

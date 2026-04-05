@@ -25,6 +25,10 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from functools import partial
+
+# Unbuffered print so terminal shows progress immediately
+print = partial(print, flush=True)
 
 
 def run_command(cmd: str, timeout: int = 120) -> tuple:
@@ -108,7 +112,7 @@ Respond with JSON only:
         input=prompt,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
     )
 
     if result.returncode != 0:
@@ -187,15 +191,15 @@ def main():
 
     history = []
     consecutive_reverts = 0
+    last_results = baseline  # Reuse baseline; only re-score after edits
 
     for round_num in range(1, args.max_rounds + 1):
         print(f"\n{'='*40}")
         print(f"Round {round_num}/{args.max_rounds} | Best: {best_score}%")
         print(f"{'='*40}")
 
-        # Get current failing checks
-        current_results = run_scoring(args.scoring, args.target)
-        failing = get_failing_checks(current_results)
+        # Use previous round's results for failing checks (avoids double-scoring)
+        failing = get_failing_checks(last_results)
 
         if not failing:
             print("All checks passing! Score: 100%")
@@ -233,11 +237,13 @@ def main():
             git_commit(args.target, f"autoresearch: {proposal['change_description']} | score: {new_score}")
             print(f"  KEPT (+{round(new_score - best_score, 2)}%)")
             best_score = new_score
+            last_results = new_results  # Carry forward new results
             kept = True
             consecutive_reverts = 0
         else:
             git_revert(args.target)
             print(f"  REVERTED")
+            # last_results stays unchanged (document reverted to previous state)
             kept = False
             consecutive_reverts += 1
 

@@ -243,6 +243,97 @@ pm-autoresearch/
 └── meta-run/                 # Example: the skill improving itself (15% → 95%)
 ```
 
+## Eval Inversion: When Your Evals Are the Problem
+
+Most eval suites hit 100% too fast. When a PRD passes every check on the first run, the score feels good but tells you nothing. The evals were testing "does section X exist?" instead of "is section X specific enough to actually work?" A perfect score with shallow evals is worse than a 60% score with hard ones, because it gives false confidence.
+
+**Eval inversion** flips the loop: freeze the document, iterate the evals instead.
+
+### How It Works
+
+Say you wrote 18 evals for a stakeholder analysis skill. The document scores 100% on the first baseline. That means every eval is a presence check that any reasonable document passes. Here is what you do:
+
+**1. Freeze the document.** Do not touch `target.md`.
+
+**2. Audit each eval against four criteria:**
+
+| Criterion | Question | Action if it fails |
+|-----------|----------|-------------------|
+| Discriminability | Would a mediocre version of this document also pass? | Replace with a harder version |
+| Behavioral consistency | Would two different LLMs produce the same result from this instruction? | Add specificity requirements |
+| Contradiction coverage | Do any pairs of instructions in the document conflict? | Write cross-reference evals |
+| Edge case coverage | What inputs would break the workflow? | Write evals for those inputs |
+
+**3. Replace shallow evals with hardened versions.**
+
+Before (structural floor, always passes):
+```json
+{
+  "id": "has_confidence_scoring",
+  "check": "Does the document define a confidence scoring system?"
+}
+```
+
+After (tests whether confidence scoring actually resists gaming):
+```json
+{
+  "id": "confidence_discriminates_quality",
+  "check": "Does the confidence scoring system explicitly handle the case where many low-signal artifacts (e.g., 6 meeting notes where the stakeholder only said 'looks good') should NOT produce High confidence?",
+  "weight": 1.5
+}
+```
+
+Before (presence check):
+```json
+{
+  "id": "has_update_command",
+  "check": "Does the document define an /update-profile command?"
+}
+```
+
+After (tests a real failure mode):
+```json
+{
+  "id": "update_handles_conflicting_evidence",
+  "check": "Does the /update-profile command specify how to handle new artifacts that CONTRADICT existing profile themes? For example, if a stakeholder historically pushes back on timeline but a new artifact shows them approving an aggressive timeline.",
+  "weight": 1.5
+}
+```
+
+**4. Run the hardened suite.** The score should drop to 30-60%. If it stays above 80%, the new evals are still too shallow.
+
+**5. Unfreeze the document.** Resume the normal autoresearch loop with the hardened evals.
+
+### Real Example
+
+The [stakeholder-radar](https://github.com/vednikolic/stakeholder-radar) skill went through this exact process:
+
+| Phase | Eval count | Baseline | What changed |
+|-------|-----------|----------|-------------|
+| v1 evals (structural) | 18 | 100% | Every eval was a presence check |
+| v2 evals (hardened) | 20 | 31.82% | Tests behavioral consistency, contradiction handling, edge cases, feature interactions |
+
+The v1 suite told us the document had all the right sections. The v2 suite told us the sections had gaps: no guidance for conflicting evidence, no interaction between staleness and confidence, no handling of multi-stakeholder artifacts. Those are the problems that break the skill in real use.
+
+### When to Trigger Eval Inversion
+
+- Baseline score above 85% on first run
+- Score reaches 100% before round 10
+- 5+ evals pass in every round without ever failing
+
+### Eval Quality Tiers
+
+When writing hardened evals, aim for this distribution:
+
+| Tier | What it tests | Target share |
+|------|-------------|-------------|
+| Structural floor | Does the section exist? | 30% max |
+| Precision | Is the instruction specific enough to follow mechanically? | 20% |
+| Behavioral | Would two LLMs produce the same output? | 15% |
+| Contradiction | Do instructions conflict with each other? | 15% |
+| Edge case | What happens with unusual inputs? | 10% |
+| Interaction | Do features that should affect each other actually connect? | 10% |
+
 ## Meta-Run: The Skill Improving Itself
 
 The `meta-run/` directory contains a complete example where PM AutoResearch improved its own skill definition. Starting from 15%, the loop brought it to 95% across 20 binary evals covering instructional clarity, completeness, eval framework quality, self-containment, and adaptation to different document types.

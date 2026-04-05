@@ -31,7 +31,7 @@ The autoresearch loop replaces manual prompt/document tweaking with an automated
 │   └── program_template.md        # Boilerplate for writing agent loop instructions
 │
 └── meta-run/                      # The self-improvement run (current task)
-    ├── eval.py                    # LOCKED. 18 strict binary evals scoring SKILL.md quality.
+    ├── eval.py                    # LOCKED. 19 strict binary evals scoring SKILL.md quality.
     ├── evals.json                 # The eval definitions (reference copy, also locked)
     ├── program.md                 # Agent loop instructions for this specific run
     ├── setup.sh                   # One-time init: copies SKILL.md to target.md, inits git, runs baseline
@@ -59,16 +59,22 @@ Fully automated orchestrator. Reads program.md, proposes edits via the Anthropic
 Post-run analysis. Reads results.tsv and outputs: total rounds, keep/revert ratio, baseline-to-final score, top improvements by score delta, longest revert streak, and plateau warnings. Use this after a run to decide whether another pass is needed.
 
 ### `1-projects/pm-autoresearch/templates/eval_template.py`
-Boilerplate eval harness with example PRD evals pre-filled. For hand-crafting eval.py when you want more control than generate_eval.py provides.
+Eval harness template using `claude -p` by default with `LLM_COMMAND` env var for alternative backends. Loads evals from `evals.json` at runtime (not hardcoded). Copy this as your `eval.py` for a new run.
+
+### `1-projects/pm-autoresearch/templates/evals_template.json`
+Example eval definitions (PRD evals) showing the `id`/`category`/`check`/`weight` format. Copy and customize for your target document type. 13 example evals across 5 categories.
+
+### `1-projects/pm-autoresearch/templates/prd_evals_template.json`
+Battle-tested PRD eval suite (18 evals, weight 18.5) generalized from the workspace-platform autoresearch run (17% -> 94%). Includes `_notes` field on every eval explaining provenance. Covers structure, specificity, reasoning, completeness, clarity. Preferred over evals_template.json for PRD runs.
 
 ### `1-projects/pm-autoresearch/templates/program_template.md`
-Generic agent loop instructions. Covers setup, the 7-step experiment cycle, research direction hints (customize these), constraints, error handling, and end-of-run reporting. Fork this for each new run.
+Agent loop instructions template with `<!-- CUSTOMIZE THESE -->` markers for research direction hints and constraints. Covers setup, the 7-step experiment cycle, error handling, and end-of-run reporting. Fork this for each new run.
 
 ### `1-projects/pm-autoresearch/meta-run/eval.py`
-THE LOCKED SCORING HARNESS. Contains 18 binary evals across 6 categories, with a strict judge system prompt. Calls Claude Sonnet via the Anthropic API to answer each eval question YES/NO against the document. Outputs composite_score (weighted percentage), category breakdown, and individual pass/fail. **The agent must never modify this file.** If the agent could change the evals, it would just make the test easier instead of making the document better.
+THE LOCKED SCORING HARNESS. Contains 19 binary evals across 6 categories, with a strict judge system prompt. Calls Claude Sonnet via the Anthropic API to answer each eval question YES/NO against the document. Outputs composite_score (weighted percentage), category breakdown, and individual pass/fail. **The agent must never modify this file.** If the agent could change the evals, it would just make the test easier instead of making the document better.
 
 ### `1-projects/pm-autoresearch/meta-run/evals.json`
-The 18 eval definitions in JSON format. Reference copy. Same data as what's hardcoded in eval.py. Exists so you can review and evolve the evals between runs without reading Python.
+The 19 eval definitions in JSON format. Reference copy. Same data as what's hardcoded in eval.py. Exists so you can review and evolve the evals between runs without reading Python.
 
 ### `1-projects/pm-autoresearch/meta-run/program.md`
 Agent instructions for this specific run. Contains: setup steps, the 7-step experiment loop, 7 prioritized research direction hints (what's weak in SKILL.md and what to try), constraints (preserve the three-file mapping table, stay under 600 lines, don't invent fake data), error handling procedures, and end-of-run reporting format.
@@ -76,16 +82,17 @@ Agent instructions for this specific run. Contains: setup steps, the 7-step expe
 ### `1-projects/pm-autoresearch/meta-run/setup.sh`
 One-time initialization. Copies SKILL.md to target.md, initializes git, creates .gitignore, commits the baseline, creates results.tsv, runs the baseline eval, and prints next steps. Run this once before starting the loop.
 
-## The 18 Evals (What Gets Scored)
+## The 19 Evals (What Gets Scored)
 
-### Instructional Clarity (4 evals, total weight 5.0)
+### Instructional Clarity (5 evals, total weight 5.0)
 These test whether an agent following SKILL.md would know exactly what to do at every step.
 
 | ID | Weight | What it checks |
 |---|---|---|
 | `workflow_numbered_steps` | 1.5 | Every step numbered with an action verb and a specified output |
 | `decision_points_explicit` | 1.5 | At least 3 if/then decision points for different situations |
-| `no_ambiguous_instructions` | 1.0 | Zero instances of vague directives ("consider", "as needed") |
+| `behavioral_consistency` | 0.5 | Two Claude instances following the same instruction produce the same behavior |
+| `no_unqualified_vague_words` | 0.5 | Zero vague directives ("consider", "as needed") without immediate action spec |
 | `commands_copy_pasteable` | 1.0 | Every command complete without unspecified arguments |
 
 ### Completeness (5 evals, total weight 5.0)
@@ -134,9 +141,23 @@ Tests whether the YAML description catches relevant queries.
 
 **Total weight: 20.0. Composite score = sum(passed * weight) / 20.0 * 100.**
 
+## Meta-Run Results (2026-03-21)
+
+SKILL.md scored **90%** (16/18 passing on original eval suite, composite weighted score). Baseline was 15-22.5% depending on run. Eval suite updated to 19 evals (compound `no_ambiguous_instructions` decomposed into `behavioral_consistency` + `no_unqualified_vague_words`).
+
+| Phase | Score | Method |
+|-------|-------|--------|
+| Baseline | 15-22.5% | 4/19 passing |
+| Automated loop (30 rounds) | 52.5% | 2 edits kept, 28 failed (rate limits) |
+| Manual round 2 | 75.0% | Added scoring model, decision logic, cost estimation |
+| Manual round 3 | 85.0% | Added error handling, eval evolution guidance |
+| Manual round 4 | 90.0% | Explicit setup commands, fixed vague language |
+
+Eval suite recalibrated (2026-03-22): `no_ambiguous_instructions` decomposed into `behavioral_consistency` (0.5) + `no_unqualified_vague_words` (0.5). `commands_copy_pasteable` decomposed into `workflow_commands_copy_pasteable` (0.5) + `example_commands_use_concrete_values` (0.5). Score: 95% (18/20). Remaining failures are `behavioral_consistency` and `no_unqualified_vague_words` (genuine document quality signals).
+
 ## Desired Outcome
 
-After the meta-run completes, SKILL.md should score 85%+ on these 18 evals. Concretely that means:
+After the meta-run completes, SKILL.md should score 85%+ on these 19 evals. Concretely that means:
 
 1. The adaptation sections contain actual eval questions, not just category names
 2. There are explicit good and bad eval examples with explanations

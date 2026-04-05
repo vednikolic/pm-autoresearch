@@ -1,0 +1,80 @@
+[
+    {
+        "id": "has_problem_statement",
+        "category": "structure",
+        "check": "Does the document contain a clearly defined problem statement in its own section or paragraph?",
+        "weight": 1.5
+    },
+    {
+        "id": "has_success_metrics",
+        "category": "structure",
+        "check": "Does the document define at least 3 quantitative success metrics with specific numeric targets?",
+        "weight": 1.5
+    },
+    {
+        "id": "has_non_goals",
+        "category": "structure",
+        "check": "Does the document explicitly list what is NOT in scope?",
+        "weight": 1.0
+    },
+    {
+        "id": "has_target_user",
+        "category": "structure",
+        "check": "Does the document identify specific user segments or personas?",
+        "weight": 1.0
+    },
+    {
+        "id": "metrics_trace_to_problem",
+        "category": "reasoning",
+        "check": "Does every success metric directly address an aspect of the stated problem?",
+        "weight": 1.0
+    },
+    {
+        "id": "has_evidence",
+        "category": "reasoning",
+        "check": "Does the document cite at least 2 pieces of external evidence (data, research, benchmarks, user feedback)?",
+        "weight": 1.0
+    },
+    {
+        "id": "risks_have_mitigations",
+        "category": "reasoning",
+        "check": "Does every identified risk have at least one mitigation or contingency?",
+        "weight": 1.0
+    },
+    {
+        "id": "no_vague_timelines",
+        "category": "specificity",
+        "check": "Are all timelines expressed as specific dates, sprint numbers, or quarters (not 'soon', 'later', 'eventually')?",
+        "weight": 1.0
+    },
+    {
+        "id": "no_weasel_words",
+        "category": "specificity",
+        "check": "Is the document free of hedging language like 'might', 'could potentially', 'ideally', 'hopefully'?",
+        "weight": 0.5
+    },
+    {
+        "id": "metrics_have_targets",
+        "category": "specificity",
+        "check": "Does every success metric include a specific numeric target (not just 'improve' or 'increase')?",
+        "weight": 1.0
+    },
+    {
+        "id": "has_edge_cases",
+        "category": "completeness",
+        "check": "Does the document address at least 2 edge cases or failure modes?",
+        "weight": 1.0
+    },
+    {
+        "id": "has_dependencies",
+        "category": "completeness",
+        "check": "Does the document identify external teams, systems, or decisions it depends on?",
+        "weight": 1.0
+    },
+    {
+        "id": "jargon_defined",
+        "category": "clarity",
+        "check": "Is every technical term or acronym either widely known or defined on first use?",
+        "weight": 0.5
+    }
+]
