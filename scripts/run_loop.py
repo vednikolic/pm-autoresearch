@@ -5,7 +5,7 @@ PM AutoResearch Loop Runner
 Orchestrates the full autoresearch loop: edit target via Claude,
 run scoring, keep or revert, log results, repeat.
 
-Uses `claude -p` (Claude Code CLI) instead of the Anthropic API.
+Uses `claude -p` instead of the Anthropic API directly.
 Runs on a Pro subscription with no API key required.
 
 Usage:
@@ -149,7 +149,7 @@ def main():
     # Check claude CLI is available
     stdout, _, rc = run_command("claude --version")
     if rc != 0:
-        print("ERROR: claude CLI not found. Install Claude Code first.")
+        print("ERROR: claude CLI not found.")
         sys.exit(1)
     print(f"Using claude CLI: {stdout.strip()}")
 

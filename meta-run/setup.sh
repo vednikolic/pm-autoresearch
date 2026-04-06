@@ -16,7 +16,7 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 if ! command -v claude &> /dev/null; then
-    echo "ERROR: claude CLI not found. Install Claude Code first."
+    echo "ERROR: claude CLI not found."
     exit 1
 fi
 
@@ -66,7 +66,7 @@ echo "=== Setup Complete ==="
 echo ""
 echo "Next steps:"
 echo "  1. Review baseline.log to see current pass/fail status"
-echo "  2. Launch the loop with Claude Code:"
+echo "  2. Launch the loop:"
 echo "     claude 'Read program.md and begin the autoresearch loop on target.md'"
 echo ""
 echo "  Or run the automated loop:"

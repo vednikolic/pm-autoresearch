@@ -51,7 +51,7 @@ Deep reference on writing binary evals. Covers the anatomy of an eval (id, categ
 Takes an `evals.json` file and outputs a complete `eval.py` harness. Useful for future runs where you want to quickly stand up an eval suite for a new document. Not used in the meta-run (we already have eval.py pre-built).
 
 ### `scripts/run_loop.py`
-Fully automated orchestrator. Reads program.md, proposes edits via the Anthropic API, runs evals, keeps or reverts, logs to results.tsv. This is the "run overnight without Claude Code" option. Takes `--target`, `--eval`, `--program`, `--max-rounds`, and `--tag` arguments.
+Fully automated orchestrator. Reads program.md, proposes edits via the Anthropic API, runs evals, keeps or reverts, logs to results.tsv. This is the "run overnight unattended" option. Takes `--target`, `--eval`, `--program`, `--max-rounds`, and `--tag` arguments.
 
 ### `scripts/analyze_results.py`
 Post-run analysis. Reads results.tsv and outputs: total rounds, keep/revert ratio, baseline-to-final score, top improvements by score delta, longest revert streak, and plateau warnings. Use this after a run to decide whether another pass is needed.
@@ -180,7 +180,7 @@ This copies SKILL.md to target.md, inits git, and runs the baseline eval. Read `
 
 ### Step 2: Run the Loop
 
-**Option A: Claude Code (recommended for first run, interactive, you can watch)**
+**Option A: Interactive (recommended for first run, you can watch)**
 ```
 claude "Read program.md and begin the autoresearch loop on target.md"
 ```

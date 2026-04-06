@@ -4,7 +4,7 @@ PM AutoResearch Meta-Run Eval Harness
 Scores SKILL.md quality with 18 strict binary evals.
 DO NOT MODIFY. The agent cannot touch this file.
 
-Uses `claude -p` (Claude Code CLI) instead of the Anthropic API.
+Uses `claude -p` instead of the Anthropic API directly.
 Runs on a Pro subscription with no API key required.
 
 Usage:

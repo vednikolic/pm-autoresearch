@@ -64,7 +64,7 @@ The key insight: **the experiment log is more valuable than the final document.*
 
 ### Prerequisites
 
-- An LLM CLI ([Claude Code](https://docs.anthropic.com/en/docs/claude-code) recommended, or set `LLM_COMMAND` for alternatives)
+- An LLM CLI (`claude` recommended, or set `LLM_COMMAND` for alternatives)
 - Python 3.10+
 - Git
 
@@ -75,9 +75,9 @@ git clone https://github.com/vednikolic/pm-autoresearch.git
 cd pm-autoresearch
 ```
 
-### Option A: With Claude Code (recommended)
+### Option A: As a skill (recommended)
 
-Claude Code discovers the skill automatically.
+The skill is auto-discovered from `.claude/skills/`.
 
 ```
 /pm-autoresearch path/to/your-document.md
@@ -226,7 +226,7 @@ After a run you have:
 ```
 pm-autoresearch/
 ├── .claude/skills/pm-autoresearch/
-│   └── SKILL.md              # Skill definition (auto-discovered by Claude Code)
+│   └── SKILL.md              # Skill definition (auto-discovered)
 ├── scripts/
 │   ├── generate_eval.py      # Create eval.py from evals.json
 │   ├── run_loop.py           # Automated loop runner (run overnight)

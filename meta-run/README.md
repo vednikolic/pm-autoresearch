@@ -27,7 +27,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 Then either:
 
 ```bash
-# Option A: Claude Code (interactive, recommended for first run)
+# Option A: Interactive (recommended for first run)
 claude "Read program.md and begin the autoresearch loop on target.md"
 
 # Option B: Automated loop
