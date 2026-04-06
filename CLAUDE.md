@@ -18,8 +18,6 @@ The autoresearch loop replaces manual prompt/document tweaking with an automated
 ├── .claude/skills/pm-autoresearch/
 │   └── SKILL.md                   # Skill definition. THIS BECOMES target.md IN THE META-RUN.
 │
-├── 1-projects/pm-autoresearch/
-│
 ├── references/
 │   └── eval-design.md             # Guide for writing good binary evals per doc type
 ├── scripts/
@@ -46,40 +44,40 @@ The autoresearch loop replaces manual prompt/document tweaking with an automated
 ### `.claude/skills/pm-autoresearch/SKILL.md`
 The skill definition that teaches Claude how to run autoresearch loops on PM documents. Contains the three-file pattern mapping, step-by-step workflow, eval design guidance, and adaptation notes for different doc types. This is the source file that gets copied into `meta-run/target.md` for improvement. After the run, the improved `target.md` gets copied back here.
 
-### `1-projects/pm-autoresearch/references/eval-design.md`
+### `references/eval-design.md`
 Deep reference on writing binary evals. Covers the anatomy of an eval (id, category, check, weight), eval templates for PRDs, strategy docs, and system prompts, anti-patterns to avoid (subjective quality, length-as-proxy, redundant pairs), and the weighted scoring formula. The agent CAN inline content from this file into SKILL.md if it improves self-containment scores.
 
-### `1-projects/pm-autoresearch/scripts/generate_eval.py`
+### `scripts/generate_eval.py`
 Takes an `evals.json` file and outputs a complete `eval.py` harness. Useful for future runs where you want to quickly stand up an eval suite for a new document. Not used in the meta-run (we already have eval.py pre-built).
 
-### `1-projects/pm-autoresearch/scripts/run_loop.py`
+### `scripts/run_loop.py`
 Fully automated orchestrator. Reads program.md, proposes edits via the Anthropic API, runs evals, keeps or reverts, logs to results.tsv. This is the "run overnight without Claude Code" option. Takes `--target`, `--eval`, `--program`, `--max-rounds`, and `--tag` arguments.
 
-### `1-projects/pm-autoresearch/scripts/analyze_results.py`
+### `scripts/analyze_results.py`
 Post-run analysis. Reads results.tsv and outputs: total rounds, keep/revert ratio, baseline-to-final score, top improvements by score delta, longest revert streak, and plateau warnings. Use this after a run to decide whether another pass is needed.
 
-### `1-projects/pm-autoresearch/templates/eval_template.py`
+### `templates/eval_template.py`
 Eval harness template using `claude -p` by default with `LLM_COMMAND` env var for alternative backends. Loads evals from `evals.json` at runtime (not hardcoded). Copy this as your `eval.py` for a new run.
 
-### `1-projects/pm-autoresearch/templates/evals_template.json`
+### `templates/evals_template.json`
 Example eval definitions (PRD evals) showing the `id`/`category`/`check`/`weight` format. Copy and customize for your target document type. 13 example evals across 5 categories.
 
-### `1-projects/pm-autoresearch/templates/prd_evals_template.json`
-Battle-tested PRD eval suite (18 evals, weight 18.5) generalized from the workspace-platform autoresearch run (17% -> 94%). Includes `_notes` field on every eval explaining provenance. Covers structure, specificity, reasoning, completeness, clarity. Preferred over evals_template.json for PRD runs.
+### `templates/prd_evals_template.json`
+Battle-tested PRD eval suite (18 evals, weight 18.5) generalized from a production PRD autoresearch run (17% -> 94%). Includes `_notes` field on every eval explaining provenance. Covers structure, specificity, reasoning, completeness, clarity. Preferred over evals_template.json for PRD runs.
 
-### `1-projects/pm-autoresearch/templates/program_template.md`
+### `templates/program_template.md`
 Agent loop instructions template with `<!-- CUSTOMIZE THESE -->` markers for research direction hints and constraints. Covers setup, the 7-step experiment cycle, error handling, and end-of-run reporting. Fork this for each new run.
 
-### `1-projects/pm-autoresearch/meta-run/eval.py`
+### `meta-run/eval.py`
 THE LOCKED SCORING HARNESS. Contains 19 binary evals across 6 categories, with a strict judge system prompt. Calls Claude Sonnet via the Anthropic API to answer each eval question YES/NO against the document. Outputs composite_score (weighted percentage), category breakdown, and individual pass/fail. **The agent must never modify this file.** If the agent could change the evals, it would just make the test easier instead of making the document better.
 
-### `1-projects/pm-autoresearch/meta-run/evals.json`
+### `meta-run/evals.json`
 The 19 eval definitions in JSON format. Reference copy. Same data as what's hardcoded in eval.py. Exists so you can review and evolve the evals between runs without reading Python.
 
-### `1-projects/pm-autoresearch/meta-run/program.md`
+### `meta-run/program.md`
 Agent instructions for this specific run. Contains: setup steps, the 7-step experiment loop, 7 prioritized research direction hints (what's weak in SKILL.md and what to try), constraints (preserve the three-file mapping table, stay under 600 lines, don't invent fake data), error handling procedures, and end-of-run reporting format.
 
-### `1-projects/pm-autoresearch/meta-run/setup.sh`
+### `meta-run/setup.sh`
 One-time initialization. Copies SKILL.md to target.md, initializes git, creates .gitignore, commits the baseline, creates results.tsv, runs the baseline eval, and prints next steps. Run this once before starting the loop.
 
 ## The 19 Evals (What Gets Scored)
